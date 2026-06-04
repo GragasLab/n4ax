@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# TODO: rename "mypackage" everywhere: project.name, setuptools include,
+# isort known-first-party, CI lint paths, and the mypackage/ directory.
+
+[project]
+name = "mypackage"
+version = "0.1.0"
+authors = [
+    {name = "Gragas", email = "contact@gragas.ai"},
+]
+description = "TODO: one-line description"
+readme = "README.md"
+license = {text = "Proprietary"}
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = []
+dependencies = [
+    "jax>=0.8.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+cpu = ["jax[cpu]>=0.8.0"]
+cuda12 = ["jax[cuda12]>=0.8.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff>=0.4.0",
+    "pre-commit>=3.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["mypackage*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 119
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # Pyflakes
+    "I",      # isort
+    "W",      # pycodestyle warnings
+    "UP",     # pyupgrade
+    "FURB",   # refurb
+    "SIM",    # flake8-simplify
+    "S110",   # bandit: try-except-pass
+    "C4",     # flake8-comprehensions
+    "RUF013", # implicit Optional
+    "PERF102",# dict.items() discarding key or value
+    "PLC1802",# len in boolean test
+    "PLC0208",# iteration over set literals
+    "PIE794", # duplicate field definitions
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E741",   # ambiguous variable name (l, O, I)
+    "SIM1",   # all SIM1XX rules
+    "SIM905", # static str.split replaceable with list literal
+    "UP015",  # redundant open mode
+    "UP031",  # printf-style string formatting
+]
+extend-safe-fixes = [
+    "UP006",  # generic replacements per PEP 585
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811"]
+"*.ipynb" = ["E402", "E731", "B007", "N816"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["mypackage"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

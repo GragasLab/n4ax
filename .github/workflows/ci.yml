@@ -29,8 +29,8 @@ jobs:
 
       - name: Run linting
         run: |
-          uv run ruff check mypackage/ tests/
-          uv run ruff format --check mypackage/ tests/
+          uv run ruff check n4ax/ tests/
+          uv run ruff format --check n4ax/ tests/
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short

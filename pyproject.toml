@@ -2,16 +2,13 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# TODO: rename "mypackage" everywhere: project.name, setuptools include,
-# isort known-first-party, CI lint paths, and the mypackage/ directory.
-
 [project]
-name = "mypackage"
+name = "n4ax"
 version = "0.1.0"
 authors = [
     {name = "Gragas", email = "contact@gragas.ai"},
 ]
-description = "TODO: one-line description"
+description = "JAX/GPU N4 bias field correction — a fast drop-in match for ITK N4"
 readme = "README.md"
 license = {text = "Proprietary"}
 requires-python = ">=3.12"
@@ -19,9 +16,9 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3.13",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
-keywords = []
+keywords = ["MRI", "bias field", "N4", "N3", "JAX", "GPU"]
 dependencies = [
     "jax>=0.8.0",
     "numpy>=1.24.0",
@@ -30,53 +27,33 @@ dependencies = [
 [project.optional-dependencies]
 cpu = ["jax[cpu]>=0.8.0"]
 cuda12 = ["jax[cuda12]>=0.8.0"]
+# `compare` pulls SimpleITK (the reference N4) + plotting/IO for tests & benchmarks.
+compare = ["SimpleITK>=2.3.0", "matplotlib>=3.7", "nibabel>=5.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov",
     "ruff>=0.4.0",
     "pre-commit>=3.0",
+    "SimpleITK>=2.3.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["mypackage*"]
+include = ["n4ax*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+pythonpath = [".", "tests"]
 
 [tool.ruff]
 target-version = "py312"
 line-length = 119
 
 [tool.ruff.lint]
-select = [
-    "E",      # pycodestyle errors
-    "F",      # Pyflakes
-    "I",      # isort
-    "W",      # pycodestyle warnings
-    "UP",     # pyupgrade
-    "FURB",   # refurb
-    "SIM",    # flake8-simplify
-    "S110",   # bandit: try-except-pass
-    "C4",     # flake8-comprehensions
-    "RUF013", # implicit Optional
-    "PERF102",# dict.items() discarding key or value
-    "PLC1802",# len in boolean test
-    "PLC0208",# iteration over set literals
-    "PIE794", # duplicate field definitions
-]
-ignore = [
-    "E501",   # line too long (handled by formatter)
-    "E741",   # ambiguous variable name (l, O, I)
-    "SIM1",   # all SIM1XX rules
-    "SIM905", # static str.split replaceable with list literal
-    "UP015",  # redundant open mode
-    "UP031",  # printf-style string formatting
-]
-extend-safe-fixes = [
-    "UP006",  # generic replacements per PEP 585
-]
+select = ["E", "F", "I", "W", "UP", "FURB", "SIM", "S110", "C4", "RUF013", "PERF102", "PLC1802", "PLC0208", "PIE794"]
+ignore = ["E501", "E741", "SIM1", "SIM905", "UP015", "UP031"]
+extend-safe-fixes = ["UP006"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402", "F401", "F403", "F811"]
@@ -84,7 +61,7 @@ extend-safe-fixes = [
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
-known-first-party = ["mypackage"]
+known-first-party = ["n4ax"]
 
 [tool.ruff.format]
 quote-style = "double"

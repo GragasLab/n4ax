@@ -124,55 +124,57 @@ def main():
 
 
 def _figures(fig_data, tag):
+    from copy import copy
+
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    # per-subject 4-panel
+    def black_cmap(name):  # masked / out-of-brain voxels render black, not white
+        c = copy(plt.get_cmap(name))
+        c.set_bad("black")
+        return c
+
+    gray, viri = black_cmap("gray"), black_cmap("viridis")
+
+    def draw(ax, im2d, m2d, cmap, masked=True):
+        d = np.ma.masked_where(~m2d, im2d) if masked else im2d
+        vlo, vhi = (np.percentile(im2d[m2d], 1), np.percentile(im2d[m2d], 99)) if m2d.any() else (0, 1)
+        ax.set_facecolor("black")
+        ax.imshow(d, cmap=cmap, vmin=vlo, vmax=vhi)
+        ax.axis("off")
+
+    # per-subject panels: raw | n4ax | ITK | bias
     for sub, vol, corr, itk, bias, mask in fig_data:
         zc = vol.shape[0] // 2
         m = mask[zc]
-
-        def show(ax, im, title, cmap="gray", vlo=None, vhi=None):
-            d = np.ma.masked_where(~m, im[zc]) if title != "raw T1w" else im[zc]
-            if vlo is None:
-                vlo, vhi = (np.percentile(im[zc][m], 1), np.percentile(im[zc][m], 99)) if m.any() else (0, 1)
-            ax.imshow(d, cmap=cmap, vmin=vlo, vmax=vhi)
-            ax.set_title(title, fontsize=10)
-            ax.axis("off")
-
-        panels = [("raw T1w", vol, "gray", None, None), ("n4ax corrected", corr, "gray", None, None)]
+        panels = [("raw T1w", vol[zc], gray, False), ("n4ax corrected", corr[zc], gray, True)]
         if itk is not None:
-            panels.append(("ITK corrected", itk, "gray", None, None))
-        panels.append(("n4ax bias field", np.exp(bias), "viridis", None, None))
-        fig, axes = plt.subplots(1, len(panels), figsize=(3.2 * len(panels), 3.4))
-        for ax, (ti, im, cm, lo, hi) in zip(axes, panels):
-            show(ax, im, ti, cm, lo, hi)
-        fig.suptitle(f"NKI {sub} — axial z={zc}", fontsize=11)
+            panels.append(("ITK corrected", itk[zc], gray, True))
+        panels.append(("n4ax bias field", np.exp(bias[zc]), viri, True))
+        fig, axes = plt.subplots(1, len(panels), figsize=(3.2 * len(panels), 3.4), facecolor="black")
+        for ax, (ti, im2d, cm, mk) in zip(axes, panels):
+            draw(ax, im2d, m, cm, mk)
+            ax.set_title(ti, fontsize=10, color="white")
+        fig.suptitle(f"NKI {sub} — axial z={zc}", fontsize=11, color="white")
         fig.tight_layout(rect=[0, 0, 1, 0.95])
-        fig.savefig(OUT / f"nki_{sub}_{tag}.png", dpi=120, bbox_inches="tight")
+        fig.savefig(OUT / f"nki_{sub}_{tag}.png", dpi=120, bbox_inches="tight", facecolor="black")
         plt.close(fig)
 
-    # multi-subject grid: raw vs n4ax-corrected
+    # multi-subject grid: raw (top) vs n4ax-corrected (bottom)
     n = len(fig_data)
-    fig, axes = plt.subplots(2, n, figsize=(3 * n, 6))
+    fig, axes = plt.subplots(2, n, figsize=(3 * n, 6), facecolor="black")
     axes = np.atleast_2d(axes)
     for j, (sub, vol, corr, itk, bias, mask) in enumerate(fig_data):
         zc = vol.shape[0] // 2
         m = mask[zc]
-        vlo, vhi = (np.percentile(vol[zc][m], 1), np.percentile(vol[zc][m], 99))
-        axes[0, j].imshow(vol[zc], cmap="gray", vmin=vlo, vmax=vhi)
-        axes[0, j].set_title(sub, fontsize=9)
-        axes[0, j].axis("off")
-        clo, chi = (np.percentile(corr[zc][m], 1), np.percentile(corr[zc][m], 99))
-        axes[1, j].imshow(np.ma.masked_where(~m, corr[zc]), cmap="gray", vmin=clo, vmax=chi)
-        axes[1, j].axis("off")
-    axes[0, 0].set_ylabel("raw", fontsize=11)
-    axes[1, 0].set_ylabel("n4ax", fontsize=11)
-    fig.suptitle("NKI raw (top) vs n4ax-corrected (bottom)", fontsize=12)
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
-    fig.savefig(OUT / f"nki_grid_{tag}.png", dpi=120, bbox_inches="tight")
+        draw(axes[0, j], vol[zc], m, gray, masked=False)
+        axes[0, j].set_title(sub, fontsize=9, color="white")
+        draw(axes[1, j], corr[zc], m, gray, masked=True)
+    fig.text(0.5, 0.965, "NKI raw (top) vs n4ax-corrected (bottom)", ha="center", fontsize=12, color="white")
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.savefig(OUT / f"nki_grid_{tag}.png", dpi=120, bbox_inches="tight", facecolor="black")
     plt.close(fig)
     print(f"saved figures to {OUT}")
 

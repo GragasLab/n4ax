@@ -7,6 +7,8 @@ name = "n4ax"
 version = "0.1.0"
 authors = [
     {name = "Gragas", email = "contact@gragas.ai"},
+    {name = "Geoffroy Oudoumanessah"},
+    {name = "Jacopo Iollo"},
 ]
 description = "JAX/GPU N4 bias field correction — a fast drop-in match for ITK N4"
 readme = "README.md"

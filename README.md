@@ -18,9 +18,19 @@ slow (minutes per volume). In a GPU MRI pipeline it becomes the bottleneck. n4ax
 
 ## Install
 
+From PyPI:
+
 ```bash
-uv sync --extra cuda12        # GPU (CUDA 12)
-uv sync --extra cpu           # CPU
+uv pip install "n4ax[cuda12]"     # GPU (CUDA 12)
+uv pip install "n4ax[cpu]"        # CPU
+uv pip install n4ax               # base (bring your own JAX)
+# pip works too: pip install "n4ax[cuda12]"
+```
+
+From source (development), with [uv](https://docs.astral.sh/uv/):
+
+```bash
+git clone https://github.com/GragasLab/n4ax && cd n4ax
 uv sync --extra cuda12 --extra dev      # + tests/linting
 uv sync --extra cuda12 --extra compare  # + SimpleITK/matplotlib for benchmarks
 ```

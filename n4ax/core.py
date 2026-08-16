@@ -40,14 +40,26 @@ REAL = jnp.float32  # the iteration is float-precision-insensitive (verified vs 
 
 
 # ----------------------------- Otsu mask ------------------------------------
+@functools.partial(jax.jit, static_argnums=(1,))
 def otsu_mask(volume, nbins: int = 200):
     """Binary foreground mask via Otsu's threshold (matches ITK ``OtsuThreshold``
-    with insideValue=0/outsideValue=1: foreground = intensity above threshold)."""
+    with insideValue=0/outsideValue=1: foreground = intensity above threshold).
+
+    The bin counts are obtained by sorting the bin indices and differencing the
+    boundary positions, NOT by ``jnp.histogram``. ``jnp.histogram`` ends in
+    ``zeros(nbins).at[bin_idx].add(weights)`` — a scatter-add. On any image with a
+    dominant background (i.e. every real MRI, where the air is exactly 0) a large
+    fraction of the updates target one bin, and the colliding atomics serialise:
+    measured 71.8 s vs 0.005 s here for 2.2 M voxels, with bit-identical output.
+    Cost also grew superlinearly with voxel count, and jitting alone did not help.
+    Keep this collision-free; do not "simplify" it back to ``jnp.histogram``.
+    """
     v = jnp.asarray(volume, REAL)
     vmin, vmax = jnp.min(v), jnp.max(v)
     edges = jnp.linspace(vmin, vmax, nbins + 1)
-    hist, _ = jnp.histogram(v, bins=edges)
-    hist = hist.astype(REAL)
+    idx = jnp.clip(jnp.searchsorted(edges, v.reshape(-1), side="right") - 1, 0, nbins - 1)
+    boundaries = jnp.searchsorted(jnp.sort(idx), jnp.arange(nbins + 1, dtype=idx.dtype), side="left")
+    hist = jnp.diff(boundaries).astype(REAL)
     centers = 0.5 * (edges[:-1] + edges[1:])
     w = jnp.cumsum(hist)
     wb = w

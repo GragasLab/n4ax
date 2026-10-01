@@ -103,3 +103,7 @@ bias flattening, and the Otsu mask.
 
 Alpha. The fast defaults are tuned on NKI/phantom data; validate on your own data before
 production (the `iters=(50,50,30,20), over_relax=1.0` fallback is the conservative choice).
+
+## Resources
+
+This work was granted access to the HPC resources of IDRIS under the allocation 2022-AD011013867 made by GENCI.
